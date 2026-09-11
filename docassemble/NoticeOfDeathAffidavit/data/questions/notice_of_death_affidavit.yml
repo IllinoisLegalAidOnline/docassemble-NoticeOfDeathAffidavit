@@ -685,7 +685,7 @@ sets:
 question: |
   What is your relationship to ${related_to_who(users[0])}?
 subquestion: |
-  ${related_to_who(users[i])} does not have to be a family member. Their relationship to you could be "friend."
+  ${related_to_who(users[0])} does not have to be a family member. Their relationship to you could be "friend."
 fields: 
   - I am their...: users[0].relationship_radio
     input type: radio
