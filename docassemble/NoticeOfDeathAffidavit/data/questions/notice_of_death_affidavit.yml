@@ -27,12 +27,11 @@ objects:
 #Reminder to update easy_form_url. Current link is to the blank form.
 code: |
   ilao_easy_form_title = "Notice of Death Affidavit"
+  ilao_easy_form_title_es = ilao_easy_form_title
   ilao_easy_form_url = "https://www.illinoislegalaid.org/legal-information/notice-death-affidavit"
+  ilao_easy_form_url_es = ilao_easy_form_url
   github_user = 'IllinoisLegalAidOnline'
   github_repo_name = 'docassemble-NoticeOfDeathAffidavit'
----
-sections:
-  - review_answers: Review your answers
 ---
 sections:
   - section_intro: Start 
@@ -48,16 +47,18 @@ code: |
   sees_nav_bar
   snapshot_start
   set_progress(5)
-  notice_requirements
   how_to_use
+  notice_requirements
   accept_terms
+  if not has_todi:
+    no_todi_kickout
   if not illinois_property:
     not_in_illinois_kickout
   if not user_is_beneficiary:
     not_beneficiary_kickout
 
   nav.set_section('section_property')
-  notice_property.address
+  notice_property.county
   if not todi_filed_check:
     not_filed_kickout
   todi_date
@@ -168,6 +169,9 @@ code: |
   else:
     TAX_WORD = "TAXPAYER"
 ---
+depends on:
+  - other_owners_check
+  - shared_owners_type
 code: |
   if other_owners_check == "multiple" and shared_owners_type != "Tenancy in common":
     other_owners.there_are_any = True
@@ -210,7 +214,7 @@ subquestion: |
 
   This program helps you prepare a Notice of Death Affidavit for a property located in Illinois. 
   
-  A Notice of Death Affidavit tells the Recorder of Deeds office that a property owner has died and their property now belongs to the beneficiaries listed on the owner's Transfer on Death Instrument.
+  A Notice of Death Affidavit tells the Recorder of Deeds office that a property owner has died and their property now belongs to the beneficiaries listed on the owner's Transfer on Death Instrument (TODI).
   
   The form you create can only be used in Illinois.
 field: sees_nav_bar
@@ -222,26 +226,28 @@ question: |
 subquestion: |
   When someone makes a Transfer on Death Instrument (TODI) for their property and then dies, their property goes to their beneficiaries. A Notice of Death Affidavit tells the Recorder of Deeds office about the transfer. To learn more about TODIs, read ILAO's [**Transfer on Death Instrument FAQ**](https://www.illinoislegalaid.org/legal-information/transfer-death-instrument-common-questions).
   
-  To use this program, you will need a copy of the TODI. You can use this program if: 
-
-  * The property owner who made the TODI has died,
-
-  * You are a beneficiary named in the TODI, and,
+  After you finish the notice, you and any other beneficiaries will need to sign it in front of a notary. To learn more, read ILAO's article, [**What is a notary?**](https://www.illinoislegalaid.org/legal-information/what-notary) 
   
-  * The property being transferred is in Illinois.
-
-  After you finish the notice, you and any other beneficiaries will need to sign it in front of a notary. To learn more, read ILAO's article, [**What is a notary?**](https://www.illinoislegalaid.org/legal-information/what-notary)
+  Then, you will need to send the Notice of Death Affidavit to the Recorder of Deeds office in the county where the transferred property is.
 ---
 id: instructions
 continue button field: how_to_use
 question: |
   Instructions
-subquestion: |
-  Set aside 10 to 20 minutes to finish this program. You can log in and save your work to return to later. 
+subquestion: | 
+  You can use this program if: 
 
-  After you download your form, you and any other beneficiaries will need to sign it in front of a notary. To learn more, read ILAO's article, [**What is a notary?**](https://www.illinoislegalaid.org/legal-information/what-notary) 
+  * The property owner who made the TODI has died,
+  * You are a beneficiary named in the TODI, and 
+  * The property being transferred is in Illinois.
+
+  To use this program, you will need a copy of the TODI. You will also need to know:
+
+  * The date the property owner died,
+  * The document number the Recorder of Deeds Office gave the TODI, and
+  * The address of you or another beneficiary where tax bills can be sent.
   
-  Then, you will need to send the Notice of Death Affidavit to the Recorder of Deeds office in the county where the transferred property is.
+  Set aside 10 to 20 minutes to finish this program. You can log in and save your work to return to later. 
   
   ${ collapse_template(help_example) }  
 
@@ -257,9 +263,28 @@ content: |
 
   This is an example of help. Click again to hide.
 ---
+id: has todi
+question: |
+  Is there a TODI for the property?
+fields:
+  - no label: has_todi
+    datatype: yesnoradio
+---
+id: no todi kickout
+event: no_todi_kickout
+question: |
+  Sorry
+subquestion: |
+  You can only use this program if there is a Transfer on Death Instrument (TODI) for the property. The property may need to be settled with the rest of the owner's estate. For more information about what happens with someone's estate after they die, see ILAO's [**Settling an estate after someone dies FAQ**](https://www.illinoislegalaid.org/legal-information/how-do-i-settle-estate-after-someone-dies).
+
+  Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
+buttons:
+  - Exit: exit
+  - Restart: restart
+---
 id: illinois property
 question: |
-  Is the property in the TODI located in Illinois? 
+  Is the property located in Illinois? 
 fields:
   - no label: illinois_property
     datatype: yesnoradio
@@ -271,7 +296,7 @@ question: |
 subquestion: |
   You can only use this program for property located in Illinois.
 
-  Click **Back** if you made a mistake. You can use the [**Legal Services Corporation website**](https://www.lsc.gov/about-lsc/what-legal-aid/get-legal-help) to find a legal aid organization near you.
+  Click **Back** if you made a mistake. If you want to transfer property outside Illinois, you can use the [**Legal Services Corporation website**](https://www.lsc.gov/about-lsc/what-legal-aid/get-legal-help) to find a legal aid organization in another state.
 buttons:
   - Exit: exit
   - Restart: restart
@@ -279,6 +304,10 @@ buttons:
 id: user is beneficiary
 question: |
   Are you a beneficiary named in the TODI?
+subquestion: |
+  A beneficiary is someone who will inherit all or part of the property. The TODI lists all of the beneficiaries.
+
+  If the TODI names you as a successor to a beneficiary and that beneficiary has died, click **Yes**.
 fields:
   - no label: user_is_beneficiary
     datatype: yesnoradio
@@ -305,19 +334,42 @@ fields:
     required: False
   - City: notice_property.city
   - State: notice_property.state
+    default: IL
     code: |
       states_list() 
   - ZIP code: notice_property.zip
-  - County: notice_property.county
+  - County: notice_property.trial_court_index
+    datatype: integer
+    code: |
+      court_county_lookup()
 validation code: |
   if notice_property.state != "IL":
-    validation_error("This program can only be used for properties in Illinois.")
+    validation_error("This program can only be used for properties in Illinois.", field="notice_property.state")
+  if notice_property.trial_court_index == -1:
+    notice_property.county = "Cook"
+  else:
+    property_court = court_list.as_court(
+      'property_court',
+      notice_property.trial_court_index
+    )
+    notice_property.county = str(property_court.address.county)
 ---
 id: property pin
 question: |
   What is the Property Index Number ("PIN") for this property? 
 subquestion: |
-  The PIN should be listed on the TODI.
+  The PIN--sometimes called a "Property Account Number (PAN)," a "parcel number," or a "permanent index number"--should be listed on the TODI.
+
+  You can also find the PIN at the County Clerk's Office or Assessor's Office, and sometimes at the county's website. If the property is in one of the counties below, click their website to look up the PIN: 
+
+  * [**Cook County**](http://www.cookcountypropertyinfo.com/)
+  * [**DuPage County**](http://www.dupageco.org/PropertyInfo/PropertyLookup.aspx)
+  * [**Kane County**](https://lrs.kanecountyrecorder.net/)
+  * [**Lake County**](http://www.lakecountyil.gov/154/Chief-County-Assessment-Office)
+  * [**McHenry County**](http://www.mchenrycountygis.org/Athena)
+  * [**Will County**](https://www.willcountysoa.com/section/Property-Search-Portal)
+  
+  If the property is in a different county, search online to find the county's Recorder of Deeds website and see if you can look up the PIN for free online.
   
   The format of a PIN is 12-12-123-123-1234.
 fields:
@@ -374,6 +426,7 @@ subquestion: |
 fields:
   - Date: todi_date
     datatype: ThreePartsDate
+    alMax: ${ today().format("yyyy-MM-dd") }
 ---
 id: document number
 question: |
@@ -412,10 +465,39 @@ id: owner county
 question: |
   Where was ${owner.name_full()} living when they died?
 fields:
-  - County: owner.address.county
   - State: owner.address.state
+    default: IL
     code: |
       states_list() 
+  - County: owner.trial_court_index
+    datatype: integer
+    js show if:  |
+      val('owner.address.state') === "IL"
+    code: |
+      court_county_lookup()
+  - County: owner.address.county
+    js show if:  |
+      val('owner.address.state') != "IL"
+validation code: |
+  if owner.address.state == "IL":
+    if owner.trial_court_index == -1:
+      owner.address.county = "Cook"
+    else:
+      owner_court = court_list.as_court(
+        'owner_court',
+        owner.trial_court_index
+      )
+      owner.address.county = str(owner_court.address.county)
+---
+code: |
+  def court_county_lookup(lowercase=False):
+    all_court_counties = court_list._load_courts()['address_county'].items()
+    filtered_courts = [(-1, "cook")] if lowercase else [(-1, "Cook")]
+    for court in all_court_counties:
+      if court[1] != "Cook":
+        court_name = court[1].lower() if lowercase else court[1]
+        filtered_courts.append((court[0],court_name))
+    return sorted( filtered_courts, key=lambda y: y[1])
 ---
 id: owner marital status
 question: |
@@ -485,7 +567,7 @@ subquestion: |
   
   If ${owner.name_full()} made a TODI by themself for their share of the property, you can use this program. In that case, only ${owner.name_full()}'s share will go to you and any other beneficiaries.
 ---
-id: decedent commmon share
+id: decedent common share
 question: |
   What percentage of the property did ${owner.name_full()} own?
 subquestion: |
@@ -509,7 +591,7 @@ event: living_owner_kickout
 question: |
   Sorry
 subquestion: |
-  You can only use this program if all the joint tenants or tenants by the entirety.
+  You can only use this program if all the joint tenants or tenants by the entirety have died.
 
   Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
 buttons:
@@ -558,10 +640,29 @@ id: other owners county
 question: |
   Where was ${other_owners[i].name_full()} living when they died?
 fields:
-  - County: other_owners[i].address.county
   - State: other_owners[i].address.state
+    default: IL
     code: |
       states_list() 
+  - County: other_owners[i].trial_court_index
+    datatype: integer
+    js show if:  |
+      val('other_owners[i].address.state') === "IL"
+    code: |
+      court_county_lookup()
+  - County: other_owners[i].address.county
+    js show if:  |
+      val('other_owners[i].address.state') != "IL"
+validation code: |
+  if other_owners[i].address.state == "IL":
+    if other_owners[i].trial_court_index == -1:
+      other_owners[i].address.county = "Cook"
+    else:
+      other_court = court_list.as_court(
+        'other_court',
+        other_owners[i].trial_court_index
+      )
+      other_owners[i].address.county = str(other_court.address.county)
 ---
 id: other owners marital status
 question: |
@@ -585,9 +686,9 @@ question: |
 subquestion: |
   The property in the TODI will go to the beneficiaries named in the TODI.
 
-  If any of the beneficiaries have died, their share will go to their successor beneficiary. If a successor beneficiary is not named in the TODI or the successor beneficiary has also died, the share will be split between the other beneficiaries.
+  If a beneficiary has died, their share will go to their successor beneficiary, if any. If a successor beneficiary is not named in the TODI or the successor beneficiary has also died, the share will be split between the other beneficiaries.
 ---
-id: users name
+id: beneficiaries name
 question: |
   % if i == 0:
   What is your name?
@@ -596,9 +697,15 @@ question: |
   % endif
 subquestion: |
   % if i == 0:
+  You should enter your name the same way it is written in the TODI. If the TODI does not name you as a beneficiary, you should not use this program.
+  
   If you don't have a first name and a last name, you can enter your name in the field labeled **First** and leave the other fields blank.
   % else:
   If they don't have a first name and a last name, you can enter their name in the field labeled **First** and leave the other fields blank.
+
+  You will need to enter the names of all the beneficiaries who are still alive. If a beneficiary died and the TODI named a successor for them, you will need to enter the successor's name.
+  
+  ${collapse_template(other_bens_help)}
   % endif
 fields:
   - First: users[i].name.first
@@ -613,13 +720,11 @@ fields:
       name_suffix()
     required: False
 ---
+sets:
+  - users[i].address.address
 id: user address
 question: |
-  % if i == 0:
-  What is your mailing address?
-  % else:
   What is ${users[i].name_full()}'s mailing address?
-  % endif
 fields:
   - Street address: users[i].address.address
     address autocomplete: True
@@ -627,18 +732,73 @@ fields:
     required: False
   - City: users[i].address.city
   - State: users[i].address.state
+    default: IL
     code: |
       states_list() 
   - ZIP code: users[i].address.zip
+  - County: users[i].trial_court_index
+    datatype: integer
+    js show if:  |
+      val('users[i].address.state') === "IL"
+    code: |
+      court_county_lookup()
   - County: users[i].address.county
+    js show if:  |
+      val('users[i].address.state') != "IL"
+validation code: |
+  if users[i].address.state == "IL":
+    if users[i].trial_court_index == -1:
+      users[i].address.county = "Cook"
+    else:
+      user_court = court_list.as_court(
+        'user_court',
+        users[i].trial_court_index
+      )
+      users[i].address.county = str(user_court.address.county)
 ---
-id: users relationship
+sets:
+  - users[0].address.address
+id: user address
+question: |
+  What is your mailing address?
+fields:
+  - Street address: users[0].address.address
+    address autocomplete: True
+  - Address line 2: users[0].address.unit
+    required: False
+  - City: users[0].address.city
+  - State: users[0].address.state
+    default: IL
+    code: |
+      states_list() 
+  - ZIP code: users[0].address.zip
+  - County: users[0].trial_court_index
+    datatype: integer
+    js show if:  |
+      val('users[0].address.state') === "IL"
+    code: |
+      court_county_lookup()
+  - County: users[0].address.county
+    js show if:  |
+      val('users[0].address.state') != "IL"
+validation code: |
+  if users[0].address.state == "IL":
+    if users[0].trial_court_index == -1:
+      users[0].address.county = "Cook"
+    else:
+      user_court = court_list.as_court(
+        'user_court',
+        users[0].trial_court_index
+      )
+      users[0].address.county = str(user_court.address.county)
+---
+id: beneficiaries relationship
 sets:
   - users[i].relationship_radio
 question: |
   What is ${users[i].name_full()}'s relationship to ${related_to_who(users[i])}?
 subquestion: |
-  ${related_to_who(users[i])} does not have to be a family member. Their relationship to ${users[i].name_full()} could be "friend."
+  ${users[i].name_full()} does not have to be ${related_to_who(users[i])}'s family member. ${users[i].name_full()}'s relationship to them could be "friend."
 fields: 
   - ${users[i].name_full()} is their...: users[i].relationship_radio
     input type: radio
@@ -653,13 +813,15 @@ fields:
     js show if: 
       val('users[i].relationship_radio') == "Other"
 ---
-id: user related who choices
+id: beneficiaries related who choices
 sets:
   - users[i].related_who
 question: |
   Which owner is ${users[i].name_full()} related to?
 subquestion: |
-  They do not have to be a family member. Their relationship to ${users[i].name_full()} could be "friend."
+  They do not have to be a family member. ${users[i].name_full()}'s relationship to them could be "friend."
+
+  If ${users[i].name_full()} is related to more than one owner, pick who they are most closely related to.
 fields:
   - no label: users[i].related_who
     input type: radio
@@ -672,7 +834,9 @@ sets:
 question: |
   Which owner are you related to?
 subquestion: |
-  They do not have to be a family member. Their relationship to you could be "friend."
+  They do not have to be a family member. Your relationship to them could be "friend."
+
+  If you are related to more than one owner, pick who you are most closely related to.
 fields:
   - no label: users[0].related_who
     input type: radio
@@ -685,7 +849,7 @@ sets:
 question: |
   What is your relationship to ${related_to_who(users[0])}?
 subquestion: |
-  ${related_to_who(users[0])} does not have to be a family member. Their relationship to you could be "friend."
+  ${related_to_who(users[0])} does not have to be a family member. Your relationship to them could be "friend."
 fields: 
   - I am their...: users[0].relationship_radio
     input type: radio
@@ -706,16 +870,34 @@ question: |
 subquestion: |
   The property in the TODI will go to the beneficiaries named in the TODI.
 
-  If any of the beneficiaries have died, their share will go to their successor beneficiary. If a sucessor beneficiary is not named in the TODI or the successor beneficiary has also died, the share will be split between the other beneficiaries.
+  If a beneficiary has died, their share will go to their successor beneficiary, if any. If a successor beneficiary is not named in the TODI or the successor beneficiary has also died, the share will be split between the other beneficiaries.
+
+  The *Notice of Death Affidavit* will need to list all beneficiaries who are still alive. It will also need to list any successor beneficiaries who will get a share of the property.
+
+  ${collapse_template(other_bens_help)}
 fields:
   - no label: other_beneficiaries_check
     datatype: yesnoradio
 ---
-id: users there is another
+template: other_bens_help
+subject: |
+  **About which beneficiaries to list**
+content: |
+  In this example TODI, the property listed two beneficiaries, each with their own successor.
+  
+  [FILE todi_example_Page_1.png, 100%, List of beneficiaries in a TODI]
+
+   If Brenda Beneficiary died before the property owner died, Samantha Successor would get their share. The Notice of Death Affidavit would need to list Hannah Heir and Samantha Successor, but it would not need to list Brenda Beneficiary or Greta Grandchild.
+---
+id: beneficiaries there is another
 question: |
   Are there other beneficiaries named in the TODI?
 subquestion: |
   So far you have told us about ${users.full_names()}.
+
+  You should enter the names of all the beneficiaries who are still alive. If a beneficiary died and the TODI named a successor for them, you will need to enter the successor's name.
+  
+  ${collapse_template(other_bens_help)}
 fields:
   - no label: users.there_is_another
     datatype: yesnoradio
@@ -740,10 +922,14 @@ code: |
       person.percent_share = equal_share_reference
   else:
     running_total = 0
+    running_remainder = 100
     share_reset
     for person in users:
       person.percent_share
       running_total = running_total + person.percent_share
+      running_remainder = running_remainder - person.percent_share
+      if running_total > 100:
+        mid_percent_kickout
     if running_total != 100 and tenancy_type == "Tenants in common":
       percent_kickout
   nested_share_code = True
@@ -757,13 +943,21 @@ code: |
   if beneficiary_count  != 1:
     equal_share_reference
     if other_owners_check == "multiple" and shared_owners_type == "Tenancy in common":
-      tenancy_type = "Tenants in common"
+      update_tenancy
     if tenancy_type == "Tenants in common":
       even_split
     nested_share_code
   else:
     users[0].percent_share = 100
   share_calculator = True
+---
+depends on:
+  - other_owners_check
+  - shared_owners_type
+code: |
+  if other_owners_check == "multiple" and shared_owners_type == "Tenancy in common":
+    tenancy_type = "Tenants in common"
+  update_tenancy = True
 ---
 sets:
   - users[i].percent_share
@@ -791,9 +985,9 @@ subquestion: |
   % endif
   % endfor
   
-  The total percentage you have listed so far is ${running_total}%.
+  The total percentage you have listed so far is ${running_total}%. You must split the remaining ${running_remainder}% among the other beneficiaries.
 fields:
-  - Percent share: users[i].percent_share
+  - ${users[i].name_full()}'s percent share: users[i].percent_share
     datatype: number
     min: 0.01
     max: 99.99
@@ -809,9 +1003,9 @@ id: beneficiary share
 question: |
   What is your percent share of the property?
 subquestion: |  
-  The total percentage you have listed so far is ${running_total}%.
+  The total percentage you have listed so far is ${running_total}%. You must split the remaining ${running_remainder}% among the other beneficiaries.
 fields:
-  - Percent share: users[0].percent_share
+  - Your percent share: users[0].percent_share
     datatype: number
     min: 0.01
     max: 99.99
@@ -857,15 +1051,19 @@ id: tenancy type
 question: |
   Did the TODI make the beneficiaries **joint tenants** or **tenants in common**?
 subquestion: |
+  The TODI should say what type of tenants the beneficiaries will be. It may say something like, "I transfer my interest in the above described property to the beneficiaries designated above as joint tenants."
+  
   ${collapse_template(tenancy_type_help)}
-field: tenancy_type
-choices:
-  - Joint tenants: Joint tenants
-    help: |
-      **Joint tenant** owners all own an equal share of the property. For example, if there are three joint tenant owners, each owner owns 1/3rd of the property. Joint tenant owners also have what the law calls a "right of survivorship." This means that when a joint tenant owner passes away, their share of the property goes to the other joint tenant owners.  
-  - Tenants in common: Tenants in common
-    help: |
-      **Tenants in common** may have equal or unequal shares. For example, one owner could own an 80% share of the property and another owner could own a 20% share of the property. These percentages must add up to 100%. Tenant-in-common owners do not have the right of survivorship. If a tenant in common passes away, their share of the property goes to their estate instead of the remaining tenants in common.
+fields: 
+  - no label: tenancy_type
+    input type: radio
+    choices:
+      - Joint tenants: Joint tenants
+        help: |
+          **Joint tenant** owners all own an equal share of the property. For example, if there are three joint tenant owners, each owner owns 1/3rd of the property. Joint tenant owners also have what the law calls a "right of survivorship." This means that when a joint tenant owner passes away, their share of the property goes to the other joint tenant owners.  
+      - Tenants in common: Tenants in common
+        help: |
+          **Tenants in common** may have equal or unequal shares. For example, one owner could own an 80% share of the property and another owner could own a 20% share of the property. These percentages must add up to 100%. Tenant-in-common owners do not have the right of survivorship. If a tenant in common passes away, their share of the property goes to their estate instead of the remaining tenants in common.
 ---
 template: tenancy_type_help
 subject: |
@@ -890,9 +1088,21 @@ buttons:
   - Exit: exit
   - Restart: restart
 ---
+id: mid percent kickout
+event: mid_percent_kickout
+question: |
+  Shares add up to more than 100%
+subquestion: |
+  The percentages you listed for each beneficiary so far add up to ${running_total}%. They should not add up to more than 100%.
+  
+  If you would like to edit the percentages, click **Back**.
+buttons:
+  - Exit: exit
+  - Restart: restart
+---
 reconsider: True
 code: |
-  if users.number_gathered() == 1:
+  if not other_beneficiaries_check or users.number_gathered() == 1:
     taxpayer = users[0]
   else:
     for person in users:
@@ -947,7 +1157,7 @@ continue button field: about_taxes
 question: |
   About paying taxes on the property
 subquestion: |
-  % if users.number_gathered() == 1:
+  % if not other_beneficiaries_check or users.number_gathered() == 1:
   As the new owner of the property, you will have to pay property taxes.
   % else:
   You and the other new owners of the property will have to pay taxes for your shares of the property.
@@ -960,10 +1170,10 @@ continue button field: next_steps
 question: |
   Next steps
 subquestion: |
-  % if users.number_gathered() == 1:
-  After you download your Notice of Death affidavit, you will need to sign it in front of a notary. To learn more, read ILAO's article, [**What is a notary?**](https://www.illinoislegalaid.org/legal-information/what-notary) 
+  % if not other_beneficiaries_check or users.number_gathered() == 1:
+  After you download your Notice of Death Affidavit, you will need to sign it in front of a notary. To learn more, read ILAO's article, [**What is a notary?**](https://www.illinoislegalaid.org/legal-information/what-notary) 
   % else:
-  After you download your Notice of Death affidavit, you and the other new owners will need to sign it in front of a notary. To learn more, read ILAO's article, [**What is a notary?**](https://www.illinoislegalaid.org/legal-information/what-notary) 
+  After you download your Notice of Death Affidavit, you and the other new owners will need to sign it in front of a notary. To learn more, read ILAO's article, [**What is a notary?**](https://www.illinoislegalaid.org/legal-information/what-notary) 
   % endif
 
   % if other_owners_check == "multiple" and not shared_owners_type == "Tenancy in common":
@@ -977,11 +1187,9 @@ event: get_docs_screen
 question: |
   Download
 subquestion: |
-  Your form is ready. View and download your form below. Click **Make changes** to fix any mistakes.
+  Your forms are ready. View and download your form below. Click **Make changes** to fix any mistakes.
   
   Read the instructions to learn what to do next.
-
-  Thank you for using ILAO Easy Forms!
   
   ${ action_button_html(url_action('review_answers'), label=':edit: Make changes', color='success', size="md") }
 
@@ -1047,7 +1255,9 @@ review:
     button: |
       **Address of the property:**
 
-      ${notice_property.on_one_line(bare=True)}
+      ${notice_property.line_one(bare=True)}     
+      ${notice_property.line_two()}      
+      ${end_in_county(notice_property.county)}
   - Edit: todi_filed_check
     button: |
       **Was the TODI filed with the Recorder of Deeds Office in ${end_in_county(notice_property.county)}?**
@@ -1112,7 +1322,7 @@ review:
     show if: other_owners_check != "sole"
   - Edit: decedent_common_share
     button: |
-      **${owner.name_full()}'s share of the property:'**
+      **${owner.name_full()}'s share of the property:**
 
       ${decedent_common_share }%
     show if: other_owners_check != "sole" and shared_owners_type == "Tenancy in common"
@@ -1124,7 +1334,7 @@ review:
     show if: other_owners_check != "sole" and shared_owners_type != "Tenancy in common"
   - Edit: other_owners.revisit
     button: |-
-      **Other owners:**
+      **Other owners: (Edit to change name, location, and other info)**
 
       % for item in other_owners:
       - ${ item }
@@ -1135,10 +1345,12 @@ review:
   - Edit: users[0].name.first
     button: |-
       **Your name:**
+      
       ${users[0].name_full()}
   - Edit: users[0].relationship_radio
     button: |
       **Your relationship to ${owner.name_full()}:**
+      
       % if users[0].relationship_radio == "Other":
       ${users[0].relationship}
       % else:
@@ -1147,20 +1359,36 @@ review:
   - Edit: users[0].address.address
     button: |
       **Your address:**
-      ${users[0].address.on_one_line(bare=True)}
+      
+      ${users[0].address.line_one(bare=True)}       
+      ${users[0].address.line_two()}     
+      ${end_in_county(users[0].address.county)}
   - Edit: other_beneficiaries_check
     button: |
       **Are there other beneficiaries named in the TODI?**
 
       ${ word(yesno(other_beneficiaries_check))}  
+  - Edit: tenancy_type
+    button: |
+      **What type of tenants are the beneficiaries?**
+
+      ${tenancy_type}
+    show if: other_beneficiaries_check
   - Edit: even_split
     button: |
      **Are the beneficiaries splitting the property evenly?**
+     
      ${word(yesno(even_split))}
     show if: users.number_gathered() > 1 and tenancy_type == "Tenants in common"
+  - Edit: users[0].percent_share
+    button: |
+      **Your percent share of the property:**
+      
+      ${users[0].percent_share}%
+    show if: users.number_gathered() > 1 and tenancy_type == "Tenants in common" and not even_split
   - Edit: users.revisit
     button: |
-      **Beneficiaries:**
+      **Beneficiaries: (Edit to change name, address, and other info)**
 
       % for item in users:
       - ${ item }
@@ -1169,13 +1397,14 @@ review:
   - Edit: tax_payer_who
     button: |
       **Who should tax bills for the property be mailed to?**
+      
        ${tax_payer_who}
     show if: users.number_gathered() > 1
 ---
 id: revisit users
 continue button field: users.revisit
 question: |
-  Edit the information about the beneficiaries
+  Edit information about the beneficiaries
 subquestion: |
   ${users.table}
 
@@ -1206,10 +1435,12 @@ review:
   - Edit: x.name.first
     button: |-
       **Name:**
+      
       ${x.name_full()}
   - Edit: x.related_who
     button: |
       **${x.name_full()} is related to:**
+      
       ${x.related_who}
     show if: other_owners_check != "sole" and shared_owners_type != "Tenancy in common"
   - Edit: x.relationship_radio
@@ -1219,6 +1450,7 @@ review:
       % else:
       **${x.name_full()}'s relationship to ${owner.name_full()}:**
       % endif
+      
       % if x.relationship_radio == "Other":
       ${x.relationship}
       % else:
@@ -1227,12 +1459,21 @@ review:
   - Edit: x.address.address
     button: |
       **${x.name_full()}'s address:**
-      ${x.address.on_one_line(bare=True)}
+      
+      ${x.address.line_one(bare=True)}      
+      ${x.address.line_two()}      
+      ${end_in_county(x.address.county)}
+  - Edit: x.percent_share
+    button: |
+      **${x.name_full()}'s percent share of the property:**
+      
+      ${x.percent_share}%
+    show if: users.number_gathered() > 1 and tenancy_type == "Tenants in common" and not even_split
 ---
 id: revisit other_owners
 continue button field: other_owners.revisit
 question: |
-  Edit the information about the other owners
+  Edit information about the other owners
 subquestion: |-
   ${other_owners.table}
 
@@ -1288,7 +1529,9 @@ review:
     button: |
       **Address of the property:**
 
-      ${notice_property.on_one_line(bare=True)}
+      ${notice_property.line_one(bare=True)}     
+      ${notice_property.line_two()}      
+      ${end_in_county(notice_property.county)}
   - Edit: todi_filed_check
     button: |
       **Was the TODI filed with the Recorder of Deeds Office in ${end_in_county(notice_property.county)}?**
@@ -1360,7 +1603,7 @@ review:
     show if: other_owners_check != "sole"
   - Edit: decedent_common_share
     button: |
-      **${owner.name_full()}'s share of the property:'**
+      **${owner.name_full()}'s share of the property:**
 
       ${decedent_common_share }%
     show if: other_owners_check != "sole" and shared_owners_type == "Tenancy in common"
@@ -1372,7 +1615,7 @@ review:
     show if: other_owners_check != "sole" and shared_owners_type != "Tenancy in common"
   - Edit: other_owners.revisit
     button: |-
-      **Other owners:**
+      **Other owners: (Edit to change name, location, and other info)**
 
       % for item in other_owners:
       - ${ item }
@@ -1390,10 +1633,12 @@ review:
   - Edit: users[0].name.first
     button: |-
       **Your name:**
+      
       ${users[0].name_full()}
   - Edit: users[0].relationship_radio
     button: |
       **Your relationship to ${owner.name_full()}:**
+      
       % if users[0].relationship_radio == "Other":
       ${users[0].relationship}
       % else:
@@ -1402,20 +1647,30 @@ review:
   - Edit: users[0].address.address
     button: |
       **Your address:**
-      ${users[0].address.on_one_line(bare=True)}
+      
+      ${users[0].address.line_one(bare=True)}       
+      ${users[0].address.line_two()}     
+      ${end_in_county(users[0].address.county)}
   - Edit: other_beneficiaries_check
     button: |
       **Are there other beneficiaries named in the TODI?**
 
       ${ word(yesno(other_beneficiaries_check))}
+  - Edit: tenancy_type
+    button: |
+      **What type of tenants are the beneficiaries?**
+
+      ${tenancy_type}
+    show if: other_beneficiaries_check
   - Edit: even_split
     button: |
      **Are the beneficiaries splitting the property evenly?**
+     
      ${word(yesno(even_split))}
     show if: users.number_gathered() > 1 and tenancy_type == "Tenants in common"
   - Edit: users.revisit
     button: |
-      **Beneficiaries:**
+      **Beneficiaries: (Edit to change name, address, and other info)**
 
       % for item in users:
       - ${ item }
@@ -1424,5 +1679,6 @@ review:
   - Edit: tax_payer_who
     button: |
       **Who should tax bills for the property be mailed to?**
+      
        ${tax_payer_who}
     show if: users.number_gathered() > 1
