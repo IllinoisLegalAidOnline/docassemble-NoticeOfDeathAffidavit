@@ -12,6 +12,7 @@ include:
 ---
 modules:
   - .percentage_short_enough
+  - .truncate_hundredth
 ---
 objects:
   - users: ALPeopleList.using(object_type=ALIndividual, there_are_any=True, complete_attribute=['complete'])
@@ -69,7 +70,7 @@ code: |
   nav.set_section('section_owners')
   owner.name.first
   owner.death_date
-  owner.address.state
+  owner.outside_us
   owner.marital_status
   set_progress(40)
   if other_owners_check == "multiple":
@@ -98,7 +99,7 @@ code: |
     users[0].complete = True
     users.there_is_another = False
   set_progress(80)
-  share_calculator
+  share_calculator()
   tax_block
 
   nav.set_section('section_download')
@@ -112,7 +113,7 @@ code: |
 code: |
   other_owners[i].name.first
   other_owners[i].death_date
-  other_owners[i].address.county
+  other_owners[i].outside_us
   other_owners[i].marital_status
   if shared_owners_type == "Tenancy by the entirety":
     other_owners.there_is_another = False
@@ -132,7 +133,14 @@ code: |
 ---
 code: |
   def other_owner_string(person):
-    return person.name_full() + " (" + person.marital_status + ") died on " + person.death_date + ", a resident of " + end_in_county(person.address.county) + " in the state of " + person.address.state
+    return person.name_full() + " (" + person.marital_status + ") died on " + person.death_date + ", a resident of " + owner_location(person)
+---
+code: |
+  def owner_location(person):
+    if person.outside_us:
+      return person.country
+    else:
+      return end_in_county(person.address.county) + " in the state of " + person.address.state 
 ---
 code: |
   def include_needed(people):
@@ -244,7 +252,7 @@ subquestion: |
 
   * The date the property owner died,
   * The document number the Recorder of Deeds Office gave to the TODI, and
-  * An address where tax bills can be sent to  you or another beneficiary.
+  * An address where tax bills can be sent to you or another beneficiary.
   
   Set aside 10 to 20 minutes to finish this program. You can log in and save your work to return to later. 
   
@@ -266,7 +274,7 @@ id: has todi
 question: |
   Is there a TODI for the property?
 subquestion: |
-  A Transfer on Death Instrument (TODI) is a document that allows a person who owns Illinois real estate to give it to another person when they die. The document works outside of the probate process, so the beneficiary does not have to go to probate court to get the house.
+  A Transfer on Death Instrument (TODI) is a document that allows a person who owns Illinois real estate to give it to another person when they die. The document works outside of the probate process, so the beneficiary does not have to go to probate court to get the property.
 fields:
   - no label: has_todi
     datatype: yesnoradio
@@ -410,7 +418,7 @@ buttons:
 ---
 id: todi date
 question: |
-  beneficiaries review screen
+  When was the TODI executed?
 subquestion: |
   This is the day that the TODI was signed in front of witnesses and a notary.
 fields:
@@ -459,17 +467,24 @@ fields:
     default: IL
     code: |
       states_list() 
+    js show if: |
+      val('owner.outside_us') === false
   - County: owner.trial_court_index
     datatype: integer
     js show if:  |
-      val('owner.address.state') === "IL"
+      val('owner.address.state') === "IL" && val('owner.outside_us') === false
     code: |
       court_county_lookup()
   - County: owner.address.county
     js show if:  |
-      val('owner.address.state') != "IL"
+      val('owner.address.state') != "IL" && val('owner.outside_us') === false
+  - ${owner.name_full()} was not living in the United States: owner.outside_us
+    datatype: yesno
+  - Country: owner.country
+    js show if:
+      val('owner.outside_us') === true
 validation code: |
-  if owner.address.state == "IL":
+  if not owner.outside_us and owner.address.state == "IL":
     if owner.trial_court_index == -1:
       owner.address.county = "Cook"
     else:
@@ -636,17 +651,24 @@ fields:
     default: IL
     code: |
       states_list() 
+    js show if: |
+      val('other_owners[i].outside_us') === false
   - County: other_owners[i].trial_court_index
     datatype: integer
     js show if:  |
-      val('other_owners[i].address.state') === "IL"
+      val('other_owners[i].address.state') === "IL" && val('other_owners[i].outside_us') === false
     code: |
       court_county_lookup()
   - County: other_owners[i].address.county
     js show if:  |
-      val('other_owners[i].address.state') != "IL"
+      val('other_owners[i].address.state') != "IL" && val('other_owners[i].outside_us') === false
+  - ${other_owners[i].name_full()} was not living in the United States: other_owners[i].outside_us
+    datatype: yesno
+  - Country: other_owners[i].country
+    js show if:
+      val('other_owners[i].outside_us') === true
 validation code: |
-  if other_owners[i].address.state == "IL":
+  if not other_owners[i].outside_us and other_owners[i].address.state == "IL":
     if other_owners[i].trial_court_index == -1:
       other_owners[i].address.county = "Cook"
     else:
@@ -867,76 +889,66 @@ fields:
   - no label: other_owners.there_is_another
     datatype: yesnoradio
 ---
-depends on:
-  - equal_share_reference
-  - tenancy_type
-  - even_split
-  - beneficiary_count
 code: |
-  if tenancy_type == "Joint tenants" or even_split == True:
+  def running_total():
+    total = 0
     for person in users:
-      person.percent_share = equal_share_reference
-  else:
-    running_total = 0
-    running_remainder = 100
-    share_reset
+      if defined('person.percent_share'):
+        total += person.percent_share
+    return total
+---
+code: |
+  def running_remainder():
+    remainder = 100
     for person in users:
-      person.percent_share
-      running_total = running_total + person.percent_share
-      running_remainder = running_remainder - person.percent_share
-      if running_total > 100:
-        mid_percent_kickout
-    if running_total != 100 and tenancy_type == "Tenants in common":
-      percent_kickout
-  nested_share_code = True
+      if defined('person.percent_share'):
+        remainder -= person.percent_share
+    return remainder
 ---
-depends on:
-  - equal_share_reference
-  #- tenancy_type
-  - even_split
-  - beneficiary_count
 code: |
-  if beneficiary_count  != 1:
-    equal_share_reference
-    if other_owners_check == "multiple" and shared_owners_type == "Tenancy in common":
-      update_tenancy
-    if tenancy_type == "Tenants in common":
-      even_split
-    nested_share_code
-  else:
-    users[0].percent_share = 100
-  share_calculator = True
+  def nested_share_code():
+    if tenancy_type == "Joint tenants" or even_split == True:
+      for person in users:
+        person.percent_share = equal_share_reference()
+    else:
+      for person in users:
+        person.percent_share
+        if running_total() > 100:
+          mid_percent_kickout
+      if running_total() != 100 and tenancy_type == "Tenants in common":
+        percent_kickout
+    return      
 ---
-depends on:
-  - other_owners_check
-  - shared_owners_type
 code: |
-  if other_owners_check == "multiple" and shared_owners_type == "Tenancy in common":
-    tenancy_type = "Tenants in common"
-  update_tenancy = True
+  def share_calculator():
+    if other_beneficiaries_check and users.number_gathered() > 1:
+      if other_owners_check == "multiple" and shared_owners_type == "Tenancy in common":
+        tenancy_type = "Tenants in common"
+      if tenancy_type == "Tenants in common":
+        even_split
+      nested_share_code()
+    else:
+      users[0].percent_share = 100
+    return
 ---
 sets:
   - users[i].percent_share
-depends on:
-  - tenancy_type
-  - even_split
-  - beneficiary_count
 id: beneficiary share
 question: |
   What is ${users[i].name_full()}'s percent share of the property?
 subquestion: |
-  The total percentage you have listed so far is ${running_total}%. You must split the remaining ${running_remainder}% among the other beneficiaries.
+  The total percentage you have listed so far is ${running_total()}%. You must split the remaining ${running_remainder()}% among the other beneficiaries.
   
   % for person in users:
   % if users.index(person) == 0:
-  % if users.index(person) < i:
-  * Your share is ${person.percent_share}%.  
+  % if defined("person.percent_share"):
+  * Your share is ${truncate_hundredth(person.percent_share)}%.  
   % else:
   * Your share is 0%.
   % endif
   % else:
-  % if users.index(person) < i:
-  * ${person.name_full()}'s share is ${person.percent_share}%.  
+  % if defined("person.percent_share"):
+  * ${person.name_full()}'s share is ${truncate_hundredth(person.percent_share)}%.  
   % else:
   * ${person.name_full()}'s share is 0%.
   % endif
@@ -951,21 +963,25 @@ fields:
 ---
 sets:
   - users[0].percent_share
-depends on:
-  - tenancy_type
-  - even_split
-  - beneficiary_count
 id: user share
 question: |
   What is your percent share of the property?
 subquestion: |  
-  The total percentage you have listed so far is ${running_total}%. You must split the remaining ${running_remainder}% among the other beneficiaries.
+  The total percentage you have listed so far is ${running_total()}%. You must split the remaining ${running_remainder()}% among the other beneficiaries.
   
   % for person in users:
   % if users.index(person) == 0:
+  % if defined("person.percent_share"):
+  * Your share is ${truncate_hundredth(person.percent_share)}%.
+  % else:
   * Your share is 0%.
+  % endif
+  % else:
+  % if defined("person.percent_share"):
+  * ${person.name_full()}'s share is ${truncate_hundredth(person.percent_share)}%.  
   % else:
   * ${person.name_full()}'s share is 0%.
+  % endif
   % endif
   % endfor
 fields:
@@ -975,24 +991,9 @@ fields:
     max: 99.99
     step: 0.01
 ---
-depends on:
-  - beneficiary_count
 code: |
-  if beneficiary_count == 0:
-    equal_share_reference = 100
-  else:
-    equal_share_reference = 100 / users.number_gathered()
----
-reconsider: True
-code: |
-  beneficiary_count = users.number_gathered()
----
-reset:
-  - beneficiary_count 
-  - equal_share_reference
-  - error_switch
-  - share_calculator
-  - nested_share_code
+  def equal_share_reference():
+    return 100 / users.number_gathered()
 ---
 depends on:
   - tenancy_type
@@ -1045,7 +1046,7 @@ event: percent_kickout
 question: |
   Shares do not add up to 100%
 subquestion: |
-  The percentages you listed for each beneficiary add up to ${running_total}%. They should add up to 100%.
+  The percentages you listed for each beneficiary add up to ${running_total()}%. They should add up to 100%.
   
   If you would like to edit the percentages, click **Back**.
 buttons:
@@ -1057,7 +1058,7 @@ event: mid_percent_kickout
 question: |
   Shares add up to more than 100%
 subquestion: |
-  The percentages you listed for each beneficiary so far add up to ${running_total}%. They should not add up to more than 100%.
+  The percentages you listed for each beneficiary so far add up to ${running_total()}%. They should not add up to more than 100%.
   
   If you would like to edit the percentages, click **Back**.
 buttons:
@@ -1105,16 +1106,6 @@ code: |
       return person.related_who
     else:
       return owner.name_full()
----
-depends on:
-  - equal_share_reference
-  - tenancy_type
-  - even_split
-  - beneficiary_count
-code: |
-  for person in users:
-    undefine('person.percent_share')
-  share_reset = True
 ---
 id: about taxes
 continue button field: about_taxes
@@ -1259,11 +1250,15 @@ review:
       **Date of ${owner.name_full()}'s death:**
 
       ${owner.death_date }
-  - Edit: owner.address.county
+  - Edit: owner.outside_us
     button: |
       **Where was ${owner.name_full()} living when they died?**
 
+      % if owner.outside_us:
+      ${owner.country}
+      % else:
       ${end_in_county(owner.address.county)}, ${owner.address.state}
+      % endif
   - Edit: owner.marital_status
     button: |
       **${owner.name_full()}'s marital status when they died:**
@@ -1351,14 +1346,19 @@ review:
   - Edit: even_split
     button: |
      **Are the beneficiaries splitting the property evenly?**
-     
-     ${word(yesno(even_split))}
+
+     % if even_split:
+     Yes, they each get 1/${users.number_gathered()} of the property.
+     % else:
+     No, they each get a different percentage of the property. 
+     (Edit beneficiaries below to change the percentages.)
+     % endif
     show if: users.number_gathered() > 1 and tenancy_type == "Tenants in common"
   - Edit: users[0].percent_share
     button: |
       **Your percent share of the property:**
-      
-      ${users[0].percent_share}%
+
+      ${truncate_hundredth(users[0].percent_share)}%
     show if: users.number_gathered() > 1 and tenancy_type == "Tenants in common" and not even_split
   - Edit: users.revisit
     button: |
@@ -1441,7 +1441,7 @@ review:
     button: |
       **${x.name_full()}'s percent share of the property:**
       
-      ${x.percent_share}%
+      ${truncate_hundredth(x.percent_share)}%
     show if: users.number_gathered() > 1 and tenancy_type == "Tenants in common" and not even_split
 ---
 id: revisit other_owners
@@ -1480,11 +1480,15 @@ review:
       **Date of ${x.name_full()}'s death:**
 
       ${x.death_date }
-  - Edit: x.address.county
+  - Edit: x.outside_us
     button: |
       **Where was ${x.name_full()} living when they died?**
 
+      % if x.outside_us:
+      ${x.country}
+      % else:
       ${end_in_county(x.address.county)}, ${x.address.state}
+      % endif
   - Edit: x.marital_status
     button: |
       **${x.name_full()}'s marital status when they died:**
@@ -1550,11 +1554,15 @@ review:
       **Date of ${owner.name_full()}'s death:**
 
       ${owner.death_date }
-  - Edit: owner.address.county
+  - Edit: owner.outside_us
     button: |
       **Where was ${owner.name_full()} living when they died?**
 
+      % if owner.outside_us:
+      ${owner.country}
+      % else:
       ${end_in_county(owner.address.county)}, ${owner.address.state}
+      % endif
   - Edit: owner.marital_status
     button: |
       **${owner.name_full()}'s marital status when they died:**
@@ -1649,9 +1657,20 @@ review:
   - Edit: even_split
     button: |
      **Are the beneficiaries splitting the property evenly?**
-     
-     ${word(yesno(even_split))}
+
+     % if even_split:
+     Yes, they each get 1/${users.number_gathered()} of the property.
+     % else:
+     No, they each get a different percentage of the property. 
+     (Edit beneficiaries below to change the percentages.)
+     % endif
     show if: users.number_gathered() > 1 and tenancy_type == "Tenants in common"
+  - Edit: users[0].percent_share
+    button: |
+      **Your percent share of the property:**
+
+      ${truncate_hundredth(users[0].percent_share)}%
+    show if: users.number_gathered() > 1 and tenancy_type == "Tenants in common" and not even_split
   - Edit: users.revisit
     button: |
       **Beneficiaries: (Edit to change name, address, and other info)**
