@@ -923,7 +923,7 @@ code: |
   def share_calculator():
     if other_beneficiaries_check and users.number_gathered() > 1:
       if other_owners_check == "multiple" and shared_owners_type == "Tenancy in common":
-        tenancy_type = "Tenants in common"
+        limitation_switch
       if tenancy_type == "Tenants in common":
         even_split
       nested_share_code()
@@ -1011,6 +1011,10 @@ fields:
 code: |
   tenancy_type = "Joint tenants"
   error_switch = True
+---
+code: |
+  tenancy_type = "Tenants in common"
+  limitation_switch = True
 ---
 id: tenancy type
 question: |
