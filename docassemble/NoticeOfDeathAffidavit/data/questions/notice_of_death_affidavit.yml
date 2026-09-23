@@ -69,7 +69,11 @@ code: |
 
   nav.set_section('section_owners')
   owner.name.first
-  owner.death_date
+  if other_owners_check == "multiple":
+    if shared_owners_type == "I do not know":
+      unknown_kickout
+  if owner.death_date < todi_date and (other_owners_check != "multiple" or shared_owners_type == "Tenancy in common"):
+    only_owner_died_early_kickout
   owner.outside_us
   owner.marital_status
   set_progress(40)
@@ -82,8 +86,8 @@ code: |
         living_owner_kickout
       else:
         other_owners.gather()
-    else:
-      unknown_kickout
+        if all_died_before_todi():
+          all_died_early_kickout
 
   nav.set_section('section_beneficiaries')
   beneficiaries_intro
@@ -132,6 +136,16 @@ code: |
   users[i].complete = True
 ---
 code: |
+  def all_died_before_todi():
+    died_before_todi_flag = True
+    if owner.death_date > todi_date:
+      died_before_todi_flag = False
+    for person in other_owners:
+      if person.death_date > todi_date:
+        died_before_todi_flag = False
+    return died_before_todi_flag
+---
+code: |
   def other_owner_string(person):
     return person.name_full() + " (" + person.marital_status + ") died on " + person.death_date + ", a resident of " + owner_location(person)
 ---
@@ -140,7 +154,7 @@ code: |
     if person.outside_us:
       return person.country
     else:
-      return end_in_county(person.address.county) + " in the state of " + person.address.state 
+      return end_in_county(person.address.county) + " in the state of " + state_name(person.address.state) 
 ---
 code: |
   def include_needed(people):
@@ -459,6 +473,30 @@ fields:
     datatype: date
     max: ${ today().format("yyyy-MM-dd") }
 ---
+id: only owner died early kickout
+event: only_owner_died_early_kickout
+question: |
+  Sorry
+subquestion: |
+  You can only use this program if the Transfer on Death Instrument (TODI) was executed before ${owner.name_full()} died.
+
+  Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
+buttons:
+  - Exit: exit
+  - Restart: restart
+---
+id: all died early kickout
+event: all_died_early_kickout
+question: |
+  Sorry
+subquestion: |
+  You can only use this program if at least one of the property's owners was alive when the Transfer on Death Instrument (TODI) was executed.
+
+  Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
+buttons:
+  - Exit: exit
+  - Restart: restart
+---
 id: owner county
 question: |
   Where was ${owner.name_full()} living when they died?
@@ -478,7 +516,7 @@ fields:
   - County: owner.address.county
     js show if:  |
       val('owner.address.state') != "IL" && val('owner.outside_us') === false
-  - ${owner.name_full()} was not living in the United States: owner.outside_us
+  - ${owner.name_full()} was not living in the United States.: owner.outside_us
     datatype: yesno
   - Country: owner.country
     js show if:
@@ -545,10 +583,7 @@ fields:
 ---
 sets:
   - ownership_types[i]
-depends on:
-  - owner.marital_status
 code: |
-  if owner.marital_status == "Married":
     ownership_types = [
       {"Tenancy in common": "Tenancy in common",
         "help": "**Tenants in common** may have equal or unequal shares. For example, one owner could own an 80% share of the property and another owner could own a 20% share of the property. These percentages must add up to 100%. Tenant-in-common owners do not have the right of survivorship. If a tenant in common passes away, their share of the property goes to their estate instead of the remaining tenants in common."},
@@ -556,13 +591,6 @@ code: |
         "help": "**Joint tenant** owners all own an equal share of the property. For example, if there are three joint tenant owners, each owner owns 1/3rd of the property. Joint tenant owners also have what the law calls a 'right of survivorship.' This means that when a joint tenant owner passes away, their share of the property goes to the other joint tenant owners."},
       {"Tenancy by the entirety": "Tenancy by the entirety",
         "help": "A **tenancy by the entirety** can only exist when a property is owned by a married couple. It is similar to a joint tenancy. If one spouse passes away, the other spouse gets their share of the property. The property's deed must explicitly state the couple owns the property as tenants by the entirety."},
-      {"I do not know": "I do not know."}]   
-  else:
-    ownership_types = [
-      {"Tenancy in common": "Tenancy in common",
-        "help": "**Tenants in common** may have equal or unequal shares. For example, one owner could own an 80% share of the property and another owner could own a 20% share of the property. These percentages must add up to 100%. Tenant-in-common owners do not have the right of survivorship. If a tenant in common passes away, their share of the property goes to their estate instead of the remaining tenants in common."},
-      {"Joint Tenancy": "Joint tenancy",
-        "help": "**Joint tenant** owners all own an equal share of the property. For example, if there are three joint tenant owners, each owner owns 1/3rd of the property. Joint tenant owners also have what the law calls a 'right of survivorship.' This means that when a joint tenant owner passes away, their share of the property goes to the other joint tenant owners."},
       {"I do not know": "I do not know."}]   
 ---
 id: tenant in common explanation
@@ -619,9 +647,17 @@ buttons:
 ---
 id: other owners name
 question: |
+  % if i == 0:
+  What was the name of the other owner?
+  % else:
   What was the name of the ${ordinal(i)} other owner?
+  % endif
 subquestion: |
     If they didn't have a first name and a last name, you can enter their name in the field labeled **First** and leave the other fields blank.
+
+    % if i == 0:
+    **Note:** If there is more than one other owner, you can enter their information on another screen.
+    % endif
 fields:
   - First: other_owners[i].name.first
   - Middle: other_owners[i].name.middle
@@ -662,7 +698,7 @@ fields:
   - County: other_owners[i].address.county
     js show if:  |
       val('other_owners[i].address.state') != "IL" && val('other_owners[i].outside_us') === false
-  - ${other_owners[i].name_full()} was not living in the United States: other_owners[i].outside_us
+  - ${other_owners[i].name_full()} was not living in the United States.: other_owners[i].outside_us
     datatype: yesno
   - Country: other_owners[i].country
     js show if:
@@ -909,7 +945,7 @@ code: |
   def nested_share_code():
     if tenancy_type == "Joint tenants" or even_split == True:
       for person in users:
-        person.percent_share = equal_share_reference()
+        person.equal_percent_share = equal_share_reference()
     else:
       for person in users:
         person.percent_share
@@ -928,7 +964,7 @@ code: |
         even_split
       nested_share_code()
     else:
-      users[0].percent_share = 100
+      users[0].equal_percent_share = 100
     return
 ---
 sets:
@@ -1020,7 +1056,7 @@ id: tenancy type
 question: |
   Did the TODI make the beneficiaries **joint tenants** or **tenants in common**?
 subquestion: |
-  The TODI should explain how the property would be shared by the co-owners. It may say something like, "I transfer my interest in the above described property to the beneficiaries designated above as tenants in common," or, "The beneficiaries will have a joint tenancy in the property."
+  The TODI should explain how the property would be shared by the co-owners. It may say something like, "I transfer my interest in the above described property to the beneficiaries designated above as tenants in common," or "The beneficiaries will have a joint tenancy in the property."
   
   ${collapse_template(tenancy_type_help)}
 fields: 
@@ -1052,7 +1088,7 @@ question: |
 subquestion: |
   The percentages you listed for each beneficiary add up to ${running_total()}%. They should add up to 100%.
   
-  If you would like to edit the percentages, click **Back**.
+  If you made a mistake, you can [**edit your answers**](${url_action('section_beneficiaries')}).
 buttons:
   - Exit: exit
   - Restart: restart
@@ -1064,7 +1100,7 @@ question: |
 subquestion: |
   The percentages you listed for each beneficiary so far add up to ${running_total()}%. They should not add up to more than 100%.
   
-  If you would like to edit the percentages, click **Back**.
+  If you made a mistake, you can [**edit your answers**](${url_action('section_beneficiaries')}).
 buttons:
   - Exit: exit
   - Restart: restart
@@ -1343,9 +1379,9 @@ review:
       ${ word(yesno(other_beneficiaries_check))}  
   - Edit: tenancy_type
     button: |
-      **What type of tenants are the beneficiaries?**
+      **How do the beneficiaries own the property?**
 
-      ${tenancy_type}
+      As ${tenancy_type.lower()}
     show if: other_beneficiaries_check
   - Edit: even_split
     button: |
@@ -1355,7 +1391,8 @@ review:
      Yes, they each get 1/${users.number_gathered()} of the property.
      % else:
      No, they each get a different percentage of the property. 
-     (Edit beneficiaries below to change the percentages.)
+     
+     **Note:** Edit the beneficiaries' information below to change the percentages.
      % endif
     show if: users.number_gathered() > 1 and tenancy_type == "Tenants in common"
   - Edit: users[0].percent_share
@@ -1366,7 +1403,11 @@ review:
     show if: users.number_gathered() > 1 and tenancy_type == "Tenants in common" and not even_split
   - Edit: users.revisit
     button: |
+      % if tenancy_type == "Tenants in common":
+      **Beneficiaries: (Edit to change name, percent share, and other info)**
+      % else:
       **Beneficiaries: (Edit to change name, address, and other info)**
+      % endif
 
       % for item in users:
       - ${ item }
@@ -1447,6 +1488,18 @@ review:
       
       ${truncate_hundredth(x.percent_share)}%
     show if: users.number_gathered() > 1 and tenancy_type == "Tenants in common" and not even_split
+  - Edit: even_split
+    button: |
+      **${x.name_full()}'s percent share of the property:**
+      
+      ${truncate_hundredth(x.equal_percent_share)}%
+    show if: users.number_gathered() > 1 and tenancy_type == "Tenants in common" and even_split
+  - Edit: tenancy_type
+    button: |
+      **${x.name_full()}'s percent share of the property:**
+      
+      ${truncate_hundredth(x.equal_percent_share)}%
+    show if: users.number_gathered() > 1 and tenancy_type != "Tenants in common"
 ---
 id: revisit other_owners
 continue button field: other_owners.revisit
@@ -1654,9 +1707,9 @@ review:
       ${ word(yesno(other_beneficiaries_check))}
   - Edit: tenancy_type
     button: |
-      **What type of tenants are the beneficiaries?**
+      **How do the beneficiaries own the property?**
 
-      ${tenancy_type}
+      As ${tenancy_type.lower()}
     show if: other_beneficiaries_check
   - Edit: even_split
     button: |
@@ -1666,7 +1719,8 @@ review:
      Yes, they each get 1/${users.number_gathered()} of the property.
      % else:
      No, they each get a different percentage of the property. 
-     (Edit beneficiaries below to change the percentages.)
+     
+     **Note:** Edit the beneficiaries' information below to change the percentages.
      % endif
     show if: users.number_gathered() > 1 and tenancy_type == "Tenants in common"
   - Edit: users[0].percent_share
@@ -1677,7 +1731,11 @@ review:
     show if: users.number_gathered() > 1 and tenancy_type == "Tenants in common" and not even_split
   - Edit: users.revisit
     button: |
+      % if tenancy_type == "Tenants in common":
+      **Beneficiaries: (Edit to change name, percent share, and other info)**
+      % else:
       **Beneficiaries: (Edit to change name, address, and other info)**
+      % endif
 
       % for item in users:
       - ${ item }
