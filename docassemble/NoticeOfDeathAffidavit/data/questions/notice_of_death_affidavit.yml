@@ -1088,7 +1088,7 @@ question: |
 subquestion: |
   The percentages you listed for each beneficiary add up to ${running_total()}%. They should add up to 100%.
   
-  If you made a mistake, you can [**edit your answers**](${url_action('section_beneficiaries')}).
+  If you made a mistake, you can [**edit the percent shares**](${url_action('section_beneficiaries')}).
 buttons:
   - Exit: exit
   - Restart: restart
@@ -1100,7 +1100,7 @@ question: |
 subquestion: |
   The percentages you listed for each beneficiary so far add up to ${running_total()}%. They should not add up to more than 100%.
   
-  If you made a mistake, you can [**edit your answers**](${url_action('section_beneficiaries')}).
+  If you made a mistake, you can [**edit the percent shares**](${url_action('section_beneficiaries')}).
 buttons:
   - Exit: exit
   - Restart: restart
