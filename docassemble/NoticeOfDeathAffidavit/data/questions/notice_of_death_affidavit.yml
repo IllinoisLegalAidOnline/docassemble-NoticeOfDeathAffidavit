@@ -22,7 +22,6 @@ objects:
   - ownership_types: DAList.using(there_are_any=True)
   - other_owners: ALPeopleList.using(object_type=ALIndividual, complete_attribute=['complete'])
   - choices: ALPeopleList.using(object_type=ALIndividual, there_are_any=False, there_is_another=False)
-  - court_list: ALCourtLoader.using(file_name='docassemble.ILAO:data/sources/il_courts.xlsx')
 ---
 #Reminder to update easy_form_url. Current link is to the blank form.
 code: |
@@ -245,9 +244,9 @@ continue button field: notice_requirements
 question: |
   Information about Notice of Death Affidavit
 subquestion: |
-  When someone makes a Transfer on Death Instrument (TODI) for their property and then dies, their property goes to their beneficiaries. A Notice of Death Affidavit tells the Recorder of Deeds office about the transfer. To learn more about TODIs, read ILAO's [**Transfer on Death Instrument FAQ**](https://www.illinoislegalaid.org/legal-information/transfer-death-instrument-common-questions).
+  When someone makes a Transfer on Death Instrument (TODI) for their property and then dies, their property goes to their beneficiaries. A Notice of Death Affidavit tells the Recorder of Deeds office about the transfer. To learn more about TODIs, read ILAO's [**Transfer on Death Instrument FAQ**](https://www.illinoislegalaid.org/node/185961).
   
-  After you finish the notice, you and any other beneficiaries will need to sign it in front of a notary. To learn more, read ILAO's article, [**What is a notary?**](https://www.illinoislegalaid.org/legal-information/what-notary) 
+  After you finish the notice, you and any other beneficiaries will need to sign it in front of a notary. To learn more, read ILAO's article, [**What is a notary?**](https://www.illinoislegalaid.org/node/176196) 
   
   Then, you will need to send the Notice of Death Affidavit to the Recorder of Deeds office in the county where the transferred property is.
 ---
@@ -298,7 +297,7 @@ event: no_todi_kickout
 question: |
   Sorry
 subquestion: |
-  You can only use this program if there is a Transfer on Death Instrument (TODI) for the property. The property may need to be settled with the rest of the owner's estate. For more information about what happens with someone's estate after they die, see ILAO's [**Settling an estate after someone dies FAQ**](https://www.illinoislegalaid.org/legal-information/how-do-i-settle-estate-after-someone-dies).
+  You can only use this program if there is a Transfer on Death Instrument (TODI) for the property. The property may need to be settled with the rest of the owner's estate. For more information about what happens with someone's estate after they die, see ILAO's [**Settling an estate after someone dies FAQ**](https://www.illinoislegalaid.org/node/32916).
 
   Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
 buttons:
@@ -507,12 +506,11 @@ fields:
       states_list() 
     js show if: |
       val('owner.outside_us') === false
-  - County: owner.trial_court_index
-    datatype: integer
+  - County: owner.address.county
     js show if:  |
       val('owner.address.state') === "IL" && val('owner.outside_us') === false
     code: |
-      court_county_lookup()
+      il_county_list
   - County: owner.address.county
     js show if:  |
       val('owner.address.state') != "IL" && val('owner.outside_us') === false
@@ -521,26 +519,6 @@ fields:
   - Country: owner.country
     js show if:
       val('owner.outside_us') === true
-validation code: |
-  if not owner.outside_us and owner.address.state == "IL":
-    if owner.trial_court_index == -1:
-      owner.address.county = "Cook"
-    else:
-      owner_court = court_list.as_court(
-        'owner_court',
-        owner.trial_court_index
-      )
-      owner.address.county = str(owner_court.address.county)
----
-code: |
-  def court_county_lookup(lowercase=False):
-    all_court_counties = court_list._load_courts()['address_county'].items()
-    filtered_courts = [(-1, "cook")] if lowercase else [(-1, "Cook")]
-    for court in all_court_counties:
-      if court[1] != "Cook":
-        court_name = court[1].lower() if lowercase else court[1]
-        filtered_courts.append((court[0],court_name))
-    return sorted( filtered_courts, key=lambda y: y[1])
 ---
 id: owner marital status
 question: |
@@ -689,12 +667,11 @@ fields:
       states_list() 
     js show if: |
       val('other_owners[i].outside_us') === false
-  - County: other_owners[i].trial_court_index
-    datatype: integer
+  - County: other_owners[i].address.county
     js show if:  |
       val('other_owners[i].address.state') === "IL" && val('other_owners[i].outside_us') === false
     code: |
-      court_county_lookup()
+      il_county_list
   - County: other_owners[i].address.county
     js show if:  |
       val('other_owners[i].address.state') != "IL" && val('other_owners[i].outside_us') === false
@@ -703,16 +680,6 @@ fields:
   - Country: other_owners[i].country
     js show if:
       val('other_owners[i].outside_us') === true
-validation code: |
-  if not other_owners[i].outside_us and other_owners[i].address.state == "IL":
-    if other_owners[i].trial_court_index == -1:
-      other_owners[i].address.county = "Cook"
-    else:
-      other_court = court_list.as_court(
-        'other_court',
-        other_owners[i].trial_court_index
-      )
-      other_owners[i].address.county = str(other_court.address.county)
 ---
 id: other owners marital status
 question: |
@@ -1158,7 +1125,7 @@ subquestion: |
   You and the other new owners of the property will have to pay taxes for your shares of the property.
   % endif
 
-  For more information about property taxes, see ILAO's [**Homeowner issues FAQ**](https://www.illinoislegalaid.org/legal-information/homeowner-issues).
+  For more information about property taxes, see ILAO's [**Homeowner issues FAQ**](https://www.illinoislegalaid.org/node/187341).
 ---
 id: next steps
 continue button field: next_steps
@@ -1166,9 +1133,9 @@ question: |
   Next steps
 subquestion: |
   % if not other_beneficiaries_check or users.number_gathered() == 1:
-  After you download your Notice of Death Affidavit, you will need to sign it in front of a notary. To learn more, read ILAO's article, [**What is a notary?**](https://www.illinoislegalaid.org/legal-information/what-notary) 
+  After you download your Notice of Death Affidavit, you will need to sign it in front of a notary. To learn more, read ILAO's article, [**What is a notary?**](https://www.illinoislegalaid.org/node/176196) 
   % else:
-  After you download your Notice of Death Affidavit, you and the other new owners will need to sign it in front of a notary. To learn more, read ILAO's article, [**What is a notary?**](https://www.illinoislegalaid.org/legal-information/what-notary) 
+  After you download your Notice of Death Affidavit, you and the other new owners will need to sign it in front of a notary. To learn more, read ILAO's article, [**What is a notary?**](https://www.illinoislegalaid.org/node/176196) 
   % endif
 
   % if other_owners_check == "multiple" and not shared_owners_type == "Tenancy in common":
