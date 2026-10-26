@@ -376,9 +376,9 @@ subquestion: |
   * [**Cook County**](http://www.cookcountypropertyinfo.com/)
   * [**DuPage County**](http://www.dupageco.org/PropertyInfo/PropertyLookup.aspx)
   * [**Kane County**](https://lrs.kanecountyrecorder.net/)
-  * [**Lake County**](http://www.lakecountyil.gov/154/Chief-County-Assessment-Office)
+  * [**Lake County**](https://maps.lakecountyil.gov/taxparcelviewer/index.html)
   * [**McHenry County**](http://www.mchenrycountygis.org/Athena)
-  * [**Will County**](https://www.willcountysoa.com/section/Property-Search-Portal)
+  * [**Will County**](https://ilwill.fidlar.com/ILWIll/AvaWeb)
   
   If the property is in a different county, search online to find the county's Recorder of Deeds website and see if you can look up the PIN for free online.
   
@@ -393,14 +393,14 @@ question: |
 subquestion: |
   The legal description should be listed in the TODI.
 
-  **Note:** Be careful in writing the property description. You should copy the legal description exactly. You may wish to compare the TODI to other documents (such as a deed) to see if the descriptions are the same. If your property is in one of the counties listed below, click their website to look up the legal description.
+  **Note:** Be careful in writing the property description. You should copy the legal description exactly. You may wish to compare the TODI to other documents for the same property, such as a deed, to see if the descriptions are the same. If your property is in one of the counties listed below, click their website to look up the legal description.
 
   * [**Cook County**](http://cookrecorder.com/)
   * [**DuPage County**](https://www.dupagecounty.gov/elected_officials/recorder/)
   * [**Kane County**](https://lrs.kanecountyrecorder.net/)
   * [**Lake County**](https://www.lakecountyil.gov/258/Recorder-of-Deeds)
   * [**McHenry County**](https://www.mchenrycountyil.gov/departments/county-recorder/public-records-search-options)
-  * [**Will County**](https://www.willcountysoa.com/section/Property-Search-Portal)
+  * [**Will County**](https://ilwill.fidlar.com/ILWIll/AvaWeb)
 
   If your property is in a different county, search online to find your county's Recorder of Deeds website and see if you can look up the legal description for free online.
 fields:
