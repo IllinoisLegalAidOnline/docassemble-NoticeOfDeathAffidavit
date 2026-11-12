@@ -58,6 +58,7 @@ code: |
 
   nav.set_section('section_property')
   notice_property.county
+  notice_property.confirm_county
   if not todi_filed_check:
     not_filed_kickout
   todi_date
@@ -364,6 +365,34 @@ fields:
 validation code: |
   if notice_property.state != "IL":
     validation_error("This program can only be used for properties in Illinois.", field="notice_property.state")
+---
+generic object: ALAddress
+code: |  
+  if x.state == "IL":
+    found_county_yet = False
+    for entry in il_county_list:
+      if x.county.lower().endswith(" county"):
+        if x.county.lower()[0:-7] == entry.lower():
+          found_county_yet = True
+      else:
+        if x.county.lower() == entry.lower():
+          found_county_yet = True
+    if not found_county_yet:
+      corrected_county
+      x.county = corrected_county
+  x.confirm_county = True
+---
+depends on:
+  - notice_property.county
+id: county dropdown
+question: |
+  What county is the property in?
+subquestion: |
+  We could not find the county for ${ notice_property.on_one_line(bare=True) } in the list of Illinois counties, but you can select it here.
+fields:
+  - County: corrected_county
+    code: |
+      il_county_list
 ---
 id: property pin
 question: |
@@ -1213,7 +1242,11 @@ subquestion: |
 review:
   - note: |
       <h4>Property</h4>
-  - Edit: notice_property.address
+  - label: Edit
+    fields: 
+      - notice_property.address
+      - recompute:
+        - notice_property.confirm_county
     button: |
       **Address of the property:**
 
@@ -1527,7 +1560,11 @@ question: |
 subquestion: |
   Edit your answers below.
 review:
-  - Edit: notice_property.address
+  - label: Edit
+    fields: 
+      - notice_property.address
+      - recompute:
+        - notice_property.confirm_county
     button: |
       **Address of the property:**
 
