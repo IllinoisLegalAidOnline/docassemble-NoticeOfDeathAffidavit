@@ -1,7 +1,7 @@
 metadata:
   title: Notice of Death Affidavit
   short title: Notice of Death Affidavit
-  comment:  This Easy Form helps you tell the Recorder of Deeds office that a property owner has died and their property should be transferred to their beneficiaries.
+  comment:  This Easy Form helps you tell the Recorder of Deeds Office that a property owner has died and their property should be transferred to their beneficiaries.
   authors:
     - Vivian McNaughton
 ---
@@ -102,8 +102,10 @@ code: |
   else:
     users[0].complete = True
     users.there_is_another = False
+
   set_progress(80)
   share_calculator()
+  about_taxes
   tax_block
 
   nav.set_section('section_download')
@@ -147,7 +149,7 @@ code: |
 ---
 code: |
   def other_owner_string(person):
-    return person.name_full() + " (" + person.marital_status + ") died on " + person.death_date + ", a resident of " + owner_location(person)
+    return person.name_full() + " (" + person.marital_status + ") died on " + str(person.death_date) + ", a resident of " + owner_location(person)
 ---
 code: |
   def owner_location(person):
@@ -235,7 +237,7 @@ subquestion: |
 
   This program helps you prepare a Notice of Death Affidavit for a property located in Illinois. 
   
-  A Notice of Death Affidavit tells the Recorder of Deeds office that a property owner has died and their property now belongs to the beneficiaries listed on the owner's Transfer on Death Instrument (TODI).
+  A Notice of Death Affidavit tells the Recorder of Deeds Office that a property owner has died and their property now belongs to the beneficiaries listed on the owner's Transfer on Death Instrument (TODI).
   
   The form you create can only be used in Illinois.
 field: sees_nav_bar
@@ -245,11 +247,11 @@ continue button field: notice_requirements
 question: |
   Information about Notice of Death Affidavit
 subquestion: |
-  When someone makes a Transfer on Death Instrument (TODI) for their property and then dies, their property goes to their beneficiaries. A Notice of Death Affidavit tells the Recorder of Deeds office about the transfer. To learn more about TODIs, read ILAO's [**Transfer on Death Instrument FAQ**](https://www.illinoislegalaid.org/node/185961).
+  When someone makes a Transfer on Death Instrument (TODI) for their property and then dies, their property goes to their beneficiaries. A Notice of Death Affidavit tells the Recorder of Deeds Office about the transfer. To learn more about TODIs, read ILAO's [**Transfer on Death Instrument FAQ**](https://www.illinoislegalaid.org/node/185961).
   
   After you finish the notice, you and any other beneficiaries will need to sign it in front of a notary. To learn more, read ILAO's article, [**What is a notary?**](https://www.illinoislegalaid.org/node/176196) 
   
-  Then, you will need to send the Notice of Death Affidavit to the Recorder of Deeds office in the county where the transferred property is.
+  Then, you will need to send the Notice of Death Affidavit to the Recorder of Deeds Office in the county where the transferred property is.
 ---
 id: instructions
 continue button field: how_to_use
@@ -451,7 +453,7 @@ event: not_filed_kickout
 question: |
   Sorry
 subquestion: |
-  You can only use a Notice of Death Affidavit if the TODI was filed with the Recorder of Deeds office.
+  You can only use a Notice of Death Affidavit if the TODI was filed with the Recorder of Deeds Office.
 
   Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
 buttons:
@@ -488,7 +490,7 @@ fields:
     required: False
   - Suffix: owner.name.suffix
     help: |
-      Some names have a suffix after the last name, such as "Senior," "III," or "Jr." If your name does not have a suffix, you can leave this blank.
+      Some names have a suffix after the last name, such as "Senior," "III," or "Jr." If their name does not have a suffix, you can leave this blank.
     code: |
       name_suffix()
     required: False
@@ -560,7 +562,7 @@ fields:
       - Married
       - Legally separated by a judge: Legally separated by a judge
         help: |
-          A legal separation is a court-ordered arrangement for a married couple to live separately and separate their assets. If you live apart from your spouse but were not separated by a judge, you are still considered married.
+          A legal separation is a court-ordered arrangement for a married couple to live separately and separate their assets. If ${owner.name_full()} and their spouse lived apart but were not separated by a judge, they were still considered married.
       - Divorced
       - Widowed
 ---
@@ -673,7 +675,7 @@ fields:
     required: False
   - Suffix: other_owners[i].name.suffix
     help: |
-      Some names have a suffix after the last name, such as "Senior," "III," or "Jr." If your name does not have a suffix, you can leave this blank.
+      Some names have a suffix after the last name, such as "Senior," "III," or "Jr." If their name does not have a suffix, you can leave this blank.
     code: |
       name_suffix()
     required: False
@@ -761,7 +763,11 @@ fields:
     required: False
   - Suffix: users[i].name.suffix
     help: |
+      % if i == 0:
       Some names have a suffix after the last name, such as "Senior," "III," or "Jr." If your name does not have a suffix, you can leave this blank.
+      % else:
+      Some names have a suffix after the last name, such as "Senior," "III," or "Jr." If their name does not have a suffix, you can leave this blank.
+      % endif
     code: |
       name_suffix()
     required: False
@@ -873,6 +879,13 @@ fields:
   - I am their...: users[0].relationship
     js show if: 
       val('users[0].relationship_radio') == "Other" 
+---
+code: |
+  if other_beneficiaries_check:
+    if users.number_gathered() == 1:
+      users.reset_gathered()
+      users.there_is_another = True
+  update_beneficiary_list = True
 ---
 id: other beneficiaries check
 question: |
@@ -1029,7 +1042,6 @@ code: |
 ---
 depends on:
   - tenancy_type
-  - beneficiary_count
 id: even split
 question: |
   How did the TODI split the property between beneficiaries?
@@ -1178,7 +1190,7 @@ event: get_docs_screen
 question: |
   Download
 subquestion: |
-  Your forms are ready. View and download your form below. Click **Make changes** to fix any mistakes.
+  Your forms are ready. View and download your forms below. Click **Make changes** to fix any mistakes.
   
   Read the instructions to learn what to do next.
   
@@ -1372,7 +1384,11 @@ review:
       ${users[0].address.line_one(bare=True)}       
       ${users[0].address.line_two()}     
       ${end_in_county(users[0].address.county)}
-  - Edit: other_beneficiaries_check
+  - label: Edit
+    fields: 
+      - other_beneficiaries_check
+      - recompute:
+        - update_beneficiary_list
     button: |
       **Are there other beneficiaries named in the TODI?**
 
@@ -1394,13 +1410,13 @@ review:
      
      **Note:** Edit the beneficiaries' information below to change the percentages.
      % endif
-    show if: users.number_gathered() > 1 and tenancy_type == "Tenants in common"
+    show if: other_beneficiaries_check and users.number_gathered() > 1 and tenancy_type == "Tenants in common"
   - Edit: users[0].percent_share
     button: |
       **Your percent share of the property:**
 
       ${truncate_hundredth(users[0].percent_share)}%
-    show if: users.number_gathered() > 1 and tenancy_type == "Tenants in common" and not even_split
+    show if: other_beneficiaries_check and users.number_gathered() > 1 and tenancy_type == "Tenants in common" and not even_split
   - Edit: users.revisit
     button: |
       % if tenancy_type == "Tenants in common":
@@ -1418,7 +1434,7 @@ review:
       **Who should tax bills for the property be mailed to?**
       
        ${tax_payer_who}
-    show if: users.number_gathered() > 1
+    show if: other_beneficiaries_check and users.number_gathered() > 1
 ---
 id: revisit users
 continue button field: users.revisit
@@ -1704,11 +1720,15 @@ review:
       ${users[0].address.line_one(bare=True)}       
       ${users[0].address.line_two()}     
       ${end_in_county(users[0].address.county)}
-  - Edit: other_beneficiaries_check
+  - label: Edit
+    fields: 
+      - other_beneficiaries_check
+      - recompute:
+        - update_beneficiary_list
     button: |
       **Are there other beneficiaries named in the TODI?**
 
-      ${ word(yesno(other_beneficiaries_check))}
+      ${ word(yesno(other_beneficiaries_check))} 
   - Edit: tenancy_type
     button: |
       **How do the beneficiaries own the property?**
@@ -1726,13 +1746,13 @@ review:
      
      **Note:** Edit the beneficiaries' information below to change the percentages.
      % endif
-    show if: users.number_gathered() > 1 and tenancy_type == "Tenants in common"
+    show if: other_beneficiaries_check and users.number_gathered() > 1 and tenancy_type == "Tenants in common"
   - Edit: users[0].percent_share
     button: |
       **Your percent share of the property:**
 
       ${truncate_hundredth(users[0].percent_share)}%
-    show if: users.number_gathered() > 1 and tenancy_type == "Tenants in common" and not even_split
+    show if: other_beneficiaries_check and users.number_gathered() > 1 and tenancy_type == "Tenants in common" and not even_split
   - Edit: users.revisit
     button: |
       % if tenancy_type == "Tenants in common":
@@ -1750,4 +1770,4 @@ review:
       **Who should tax bills for the property be mailed to?**
       
        ${tax_payer_who}
-    show if: users.number_gathered() > 1
+    show if: other_beneficiaries_check and users.number_gathered() > 1
