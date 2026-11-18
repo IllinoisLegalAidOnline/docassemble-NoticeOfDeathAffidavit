@@ -391,10 +391,18 @@ question: |
   What county is the property in?
 subquestion: |
   We could not find the county for ${ notice_property.on_one_line(bare=True) } in the list of Illinois counties, but you can select it here.
+
+  ${ collapse_template(county_lookup_help) }  
 fields:
   - County: corrected_county
     code: |
       il_county_list
+---
+template: county_lookup_help
+subject: |
+  **How do I look up the county?**
+content: |  
+  You can use this [**City-to-County Finder**](https://www.statsamerica.org/CityCountyFinder/) to find the county.
 ---
 id: property pin
 question: |
@@ -1226,7 +1234,7 @@ content: |
 ---
 objects:
   - al_user_bundle: ALDocumentBundle.using(elements=[instructions, notice], filename="notice_of_death_affidavit.pdf", title="All forms", enabled=True)
-  - al_court_bundle: ALDocumentBundle.using(elements=[instructions, notice], filename="notice_of_death_affidavit", title="All forms", enabled=True)
+  - al_court_bundle: ALDocumentBundle.using(elements=[instructions, notice], filename="notice_of_death_affidavit.pdf", title="All forms", enabled=True)
 ---
 attachment:
   - name: notice
