@@ -1,7 +1,7 @@
 metadata:
   title: Notice of Death Affidavit
   short title: Notice of Death Affidavit
-  comment:  This Easy Form helps you tell the Recorder of Deeds Office that a property owner has died and their property should be transferred to their beneficiaries.
+  comment:  This Easy Form helps you tell the Recorder of Deeds office that a property owner has died and their property should be transferred to their beneficiaries.
   authors:
     - Vivian McNaughton
 ---
@@ -237,7 +237,7 @@ subquestion: |
 
   This program helps you prepare a Notice of Death Affidavit for a property located in Illinois. 
   
-  A Notice of Death Affidavit tells the Recorder of Deeds Office that a property owner has died and their property now belongs to the beneficiaries listed on the owner's Transfer on Death Instrument (TODI).
+  A Notice of Death Affidavit tells the Recorder of Deeds office that a property owner has died and their property now belongs to the beneficiaries listed on the owner's Transfer on Death Instrument (TODI).
   
   The form you create can only be used in Illinois.
 field: sees_nav_bar
@@ -247,11 +247,11 @@ continue button field: notice_requirements
 question: |
   Information about Notice of Death Affidavit
 subquestion: |
-  When someone makes a Transfer on Death Instrument (TODI) for their property and then dies, their property goes to their beneficiaries. A Notice of Death Affidavit tells the Recorder of Deeds Office about the transfer. To learn more about TODIs, read ILAO's [**Transfer on Death Instrument FAQ**](https://www.illinoislegalaid.org/node/185961).
+  When someone makes a Transfer on Death Instrument (TODI) for their property and then dies, their property goes to their beneficiaries. A Notice of Death Affidavit tells the Recorder of Deeds office about the transfer. To learn more about TODIs, read ILAO's [**Transfer on Death Instrument FAQ**](https://www.illinoislegalaid.org/node/185961).
   
   After you finish the notice, you and any other beneficiaries will need to sign it in front of a notary. To learn more, read ILAO's article, [**What is a notary?**](https://www.illinoislegalaid.org/node/176196) 
   
-  Then, you will need to send the Notice of Death Affidavit to the Recorder of Deeds Office in the county where the transferred property is.
+  Then, you will need to send the Notice of Death Affidavit to the Recorder of Deeds office in the county where the transferred property is.
 ---
 id: instructions
 continue button field: how_to_use
@@ -267,7 +267,7 @@ subquestion: |
   To use this program, you will need a copy of the TODI. You will also need to know:
 
   * The date the property owner died,
-  * The document number the Recorder of Deeds Office gave to the TODI, and
+  * The document number the Recorder of Deeds office gave to the TODI, and
   * An address where tax bills can be sent to you or another beneficiary.
   
   Set aside 10 to 20 minutes to finish this program. You can log in and save your work to return to later. 
@@ -371,15 +371,15 @@ validation code: |
 generic object: ALAddress
 code: |  
   if x.state == "IL":
-    found_county_yet = False
+    county_found = False
     for entry in il_county_list:
       if x.county.lower().endswith(" county"):
         if x.county.lower()[0:-7] == entry.lower():
-          found_county_yet = True
+          county_found = True
       else:
         if x.county.lower() == entry.lower():
-          found_county_yet = True
-    if not found_county_yet:
+          county_found = True
+    if not county_found:
       corrected_county
       x.county = corrected_county
   x.confirm_county = True
@@ -443,7 +443,7 @@ fields:
 ---
 id: todi filed check
 question: |
-  Was the TODI filed with the Recorder of Deeds Office in ${end_in_county(notice_property.county)}?
+  Was the TODI filed with the Recorder of Deeds office in ${end_in_county(notice_property.county)}?
 fields:
   - no label: todi_filed_check
     datatype: yesnoradio
@@ -453,7 +453,7 @@ event: not_filed_kickout
 question: |
   Sorry
 subquestion: |
-  You can only use a Notice of Death Affidavit if the TODI was filed with the Recorder of Deeds Office.
+  You can only use a Notice of Death Affidavit if the TODI was filed with the Recorder of Deeds office.
 
   Click **Back** if you made a mistake. Or you can talk with a lawyer to discuss your options. Use **[Get Legal Help](https://www.illinoislegalaid.org/get-legal-help)** to find free or low-cost legal services in your area.
 buttons:
@@ -472,7 +472,7 @@ fields:
 ---
 id: document number
 question: |
-  What document number did the Recorder of Deeds Office give the TODI?
+  What document number did the Recorder of Deeds office give the TODI?
 fields: 
   - Document number: document_number
     maxlength: 30
@@ -1180,9 +1180,9 @@ subquestion: |
   % endif
 
   % if other_owners_check == "multiple" and not shared_owners_type == "Tenancy in common":
-  Once the document is signed and notarized you will need to file it with the Recorder of Deeds Office in ${end_in_county(notice_property.county)} within two years of the last living previous owner's death.
+  Once the document is signed and notarized you will need to file it with the Recorder of Deeds office in ${end_in_county(notice_property.county)} within two years of the last living previous owner's death.
   % else:
-  Once the document is signed and notarized you will need to file it with the Recorder of Deeds Office in ${end_in_county(notice_property.county)} within two years of ${owner.name_full()}'s death.
+  Once the document is signed and notarized you will need to file it with the Recorder of Deeds office in ${end_in_county(notice_property.county)} within two years of ${owner.name_full()}'s death.
   % endif
 ---
 id: get docs screen
@@ -1267,7 +1267,7 @@ review:
       ${end_in_county(notice_property.county)}
   - Edit: todi_filed_check
     button: |
-      **Was the TODI filed with the Recorder of Deeds Office in ${end_in_county(notice_property.county)}?**
+      **Was the TODI filed with the Recorder of Deeds office in ${end_in_county(notice_property.county)}?**
 
       ${ word(yesno(todi_filed_check))}
   - Edit: todi_date
@@ -1450,7 +1450,7 @@ table: users.table
 rows: users
 columns:
   - Name: |
-      row_item.name_full() if defined("row_item.name.first") else ""
+      row_item.name_full() if hasattr(row_item.name, "first") else ""
 edit:
   - review_user
 delete buttons: True
@@ -1531,7 +1531,7 @@ table: other_owners.table
 rows: other_owners
 columns:
   - Name: |
-      row_item.name_full() if defined("row_item.name.first") else ""
+      row_item.name_full() if hasattr(row_item.name, "first") else ""
   - Address and other information: |
       action_button_html(url_action(row_item.attr_name("review_owner")), label="Edit", icon="pencil-alt")
 delete buttons: True
@@ -1589,7 +1589,7 @@ review:
       ${end_in_county(notice_property.county)}
   - Edit: todi_filed_check
     button: |
-      **Was the TODI filed with the Recorder of Deeds Office in ${end_in_county(notice_property.county)}?**
+      **Was the TODI filed with the Recorder of Deeds office in ${end_in_county(notice_property.county)}?**
 
       ${ word(yesno(todi_filed_check))}
   - Edit: todi_date
